@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/v1/inventario")
 @Tag(name= "inventario", description = "Operaciones relacionadas con la gestion del Inventario")
+//http://localhost:8082/doc/swagger-ui/index.html
 
 public class InventarioController {
     @Autowired
