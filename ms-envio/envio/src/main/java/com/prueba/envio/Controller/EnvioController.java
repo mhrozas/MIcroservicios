@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/v1/envio")
 @Tag ( name = "envio", description = "sistema de envios")
+//http://localhost:8082/doc/swagger-ui/index.html
 public class EnvioController {
     @Autowired
     private EnvioService service;
