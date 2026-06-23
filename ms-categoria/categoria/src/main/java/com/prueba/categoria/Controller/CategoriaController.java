@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController 
 @RequestMapping("/api/v1/categoria")
 @Tag(name= "categoria", description = "Operaciones relacionadas con categorias")
+//http://localhost:8082/doc/swagger-ui/index.html
 public class CategoriaController {
     @Autowired private CategoriaService service;
 
