@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/v1/carrito")
 @Tag ( name = "carrito", description = "sistema de carrito")
+//http://localhost:8082/doc/swagger-ui/index.html
 public class CarritoController {
  @Autowired
     private CarritoService service;
