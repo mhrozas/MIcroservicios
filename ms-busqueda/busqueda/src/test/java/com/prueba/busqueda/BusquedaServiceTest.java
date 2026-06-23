@@ -1,11 +1,15 @@
 package com.prueba.busqueda;
+
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.prueba.busqueda.Client.RopaFeignClient;
@@ -30,96 +34,116 @@ public class BusquedaServiceTest {
     @Mock
     private RopaFeignClient ropaClient;
 
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
+
     @Test
     public void testSave() {
+        // Given
         Busqueda busqueda = new Busqueda();
-        // Define el comportamiento del mock: al guardar, retorna el mismo objeto.
         when(repository.save(busqueda)).thenReturn(busqueda);
 
-        // Llama al método save() del servicio.
+        // When
         Busqueda saved = busquedaService.save(busqueda);
 
-        // Verifica que no sea nulo. Si asignaste un ID o categoría arriba, puedes hacer un assertEquals aquí.
+        // Then
         assertNotNull(saved);
         verify(repository, times(1)).save(busqueda);
     }
 
     @Test
     public void testFindAll() {
+        // Given
         Busqueda busqueda = new Busqueda();
-        
-        // Define el comportamiento del mock: devuelve una lista con una Búsqueda.
         when(repository.findAll()).thenReturn(List.of(busqueda));
 
-        // Llama al método findAll() del servicio.
+        // When
         List<Busqueda> busquedas = busquedaService.findAll();
 
-        // Verifica que la lista no sea nula y tenga el tamaño correcto.
+        // Then
         assertNotNull(busquedas);
         assertEquals(1, busquedas.size());
+        verify(repository, times(1)).findAll();
     }
 
     @Test
-    public void testBuscarBusquedaCompleto() {
-        Integer busquedaId = 1;
+    public void testBuscarBusquedaCompleto_Encontrado() {
+        // Given
+        Integer id = 1;
         Busqueda busqueda = new Busqueda();
-        // Asumiendo que puedes setear estos valores según tu entidad
-        // busqueda.setId(busquedaId);
-        // busqueda.setCategoria("Zapatos");
-        // busqueda.setResultadosIds(List.of(100, 101)); 
+        busqueda.setId(id);
+        busqueda.setCategoria("Poleras");
+        busqueda.setResultadosIds(List.of(7, 8));
 
         RopaDTO ropa1 = new RopaDTO();
         RopaDTO ropa2 = new RopaDTO();
 
-        // 1. Simulamos que el repositorio encuentra la búsqueda
-        when(repository.findById(busquedaId)).thenReturn(Optional.of(busqueda));
-        
-        // 2. Simulamos las llamadas al FeignClient por cada ID en getResultadosIds()
-        // NOTA: Si descomentas setResultadosIds arriba con 100 y 101, descomenta lo siguiente:
-        // when(ropaClient.obtenerRopaPorId(100)).thenReturn(ropa1);
-        // when(ropaClient.obtenerRopaPorId(101)).thenReturn(ropa2);
+        when(repository.findById(id)).thenReturn(Optional.of(busqueda));
+        when(ropaClient.obtenerRopaPorId(7)).thenReturn(ropa1);
+        when(ropaClient.obtenerRopaPorId(8)).thenReturn(ropa2);
 
-        // Llama al método complejo del servicio.
-        Map<String, Object> respuesta = busquedaService.buscarBusquedaCompleto(busquedaId);
+        // When
+        Map<String, Object> respuesta = busquedaService.buscarBusquedaCompleto(id);
 
-        // Verifica que el Map devuelto tenga los datos correctos
+        // Then
         assertNotNull(respuesta);
-        // Descomenta las validaciones según cómo construyas tu objeto 'busqueda' arriba
-        // assertEquals(busquedaId, respuesta.get("id"));
-        // assertEquals("Zapatos", respuesta.get("categoria"));
-        // List<RopaDTO> resultados = (List<RopaDTO>) respuesta.get("resultados");
-        // assertEquals(2, resultados.size());
+        assertEquals(id, respuesta.get("id"));
+        assertEquals("Poleras", respuesta.get("categoria"));
+
+        @SuppressWarnings("unchecked")
+        List<RopaDTO> resultados = (List<RopaDTO>) respuesta.get("resultados");
+        assertEquals(2, resultados.size());
+
+        verify(repository, times(1)).findById(id);
+        verify(ropaClient, times(1)).obtenerRopaPorId(7);
+        verify(ropaClient, times(1)).obtenerRopaPorId(8);
+    }
+
+    @Test
+    public void testBuscarBusquedaCompleto_NoExiste() {
+        // Given
+        Integer id = 99;
+        when(repository.findById(id)).thenReturn(Optional.empty());
+
+        // When
+        Map<String, Object> respuesta = busquedaService.buscarBusquedaCompleto(id);
+
+        // Then
+        assertNotNull(respuesta);
+        assertTrue(respuesta.isEmpty());
+        verify(repository, times(1)).findById(id);
+        verify(ropaClient, never()).obtenerRopaPorId(any());
     }
 
     @Test
     public void testDelete() {
+        // Given
         Integer id = 1;
-
-        // Define el comportamiento del mock: cuando se llame a deleteById(), no hace nada.
         doNothing().when(repository).deleteById(id);
 
-        // Llama al método delete() del servicio.
+        // When
         busquedaService.delete(id);
 
-        // Verifica que el método del repositorio se haya llamado exactamente una vez.
+        // Then
         verify(repository, times(1)).deleteById(id);
     }
 
     @Test
     public void testFiltrarPorCategoria() {
+        // Given
         String categoria = "Pantalones";
         Busqueda busqueda = new Busqueda();
-        // busqueda.setCategoria(categoria);
-
-        // Define el comportamiento del mock.
+        busqueda.setCategoria(categoria);
         when(repository.findByCategoria(categoria)).thenReturn(List.of(busqueda));
 
-        // Llama al método filtrarPorCategoria() del servicio.
-        List<Busqueda> encontradas = busquedaService.filtrarPorCategoria(categoria);
+        // When
+        List<Busqueda> resultado = busquedaService.filtrarPorCategoria(categoria);
 
-        // Verifica la respuesta.
-        assertNotNull(encontradas);
-        assertEquals(1, encontradas.size());
+        // Then
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
         verify(repository, times(1)).findByCategoria(categoria);
     }
 }
